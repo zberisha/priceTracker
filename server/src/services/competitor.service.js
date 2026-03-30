@@ -1,12 +1,21 @@
 const Competitor = require('../models/Competitor');
 const AppError = require('../utils/AppError');
+const { getSubscription } = require('./subscription.service');
 
 const createCompetitor = async (userId, data) => {
+  const sub = await getSubscription(userId);
+  if (!sub.features.competitorTracking) {
+    throw new AppError('Competitor tracking is not available on your plan. Upgrade to access this feature.', 403);
+  }
   const competitor = await Competitor.create({ ...data, user: userId });
   return competitor;
 };
 
 const getCompetitors = async (userId, productId) => {
+  const sub = await getSubscription(userId);
+  if (!sub.features.competitorTracking) {
+    throw new AppError('Competitor tracking is not available on your plan. Upgrade to access this feature.', 403);
+  }
   const filter = { user: userId, isActive: true };
   if (productId) filter.product = productId;
 

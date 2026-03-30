@@ -2,10 +2,16 @@ const Product = require('../models/Product');
 const Price = require('../models/Price');
 const AppError = require('../utils/AppError');
 const { getRedis } = require('../config/redis');
+const { getSubscription } = require('./subscription.service');
 
 const CACHE_TTL = 300; // 5 minutes
 
 const createProduct = async (userId, data) => {
+  const sub = await getSubscription(userId);
+  const count = await Product.countDocuments({ user: userId, isActive: true });
+  if (count >= sub.maxProducts) {
+    throw new AppError(`Product limit reached (${sub.maxProducts}). Upgrade your plan to add more.`, 403);
+  }
   const product = await Product.create({ ...data, user: userId });
   return product;
 };
@@ -90,4 +96,81 @@ const getPriceHistory = async (productId, query = {}) => {
   return prices;
 };
 
-module.exports = { createProduct, getProducts, getProductById, updateProduct, deleteProduct, getPriceHistory };
+const scrapeNow = async (userId, productId) => {
+  const product = await Product.findOne({ _id: productId, user: userId, isActive: true });
+  if (!product) throw new AppError('Product not found', 404);
+  if (!product.sourceUrls || product.sourceUrls.length === 0) {
+    throw new AppError('No source URLs to scrape', 400);
+  }
+
+  const { scrapePriceFromUrl } = require('./scraper.service');
+  const results = [];
+
+  for (const source of product.sourceUrls) {
+    const result = await scrapePriceFromUrl(source.url, source.platform);
+    if (!result || result.price === null) continue;
+
+    await Price.create({
+      product: product._id,
+      platform: source.platform,
+      price: result.price,
+      currency: result.currency || 'USD',
+      url: source.url,
+    });
+
+    const updates = { currentPrice: result.price, currency: result.currency || 'USD' };
+    if (result.price < product.lowestPrice || product.lowestPrice === 0) {
+      updates.lowestPrice = result.price;
+    }
+    if (result.price > product.highestPrice) {
+      updates.highestPrice = result.price;
+    }
+
+    await Product.findByIdAndUpdate(product._id, updates);
+
+    const redis = getRedis();
+    if (redis) await redis.del(`product:${productId}`);
+
+    results.push({ platform: source.platform, price: result.price, title: result.title });
+  }
+
+  if (results.length === 0) {
+    throw new AppError('Scraping returned no results — the scraper service may be down or selectors need updating.', 502);
+  }
+
+  const updated = await Product.findById(productId);
+  return { product: updated, scraped: results };
+};
+
+const exportPriceHistoryCsv = async (userId, productId, query = {}) => {
+  const sub = await getSubscription(userId);
+  if (!sub.features.exportData) {
+    throw new AppError('Data export is not available on your plan. Upgrade to premium to access this feature.', 403);
+  }
+
+  const product = await Product.findOne({ _id: productId, user: userId });
+  if (!product) throw new AppError('Product not found', 404);
+
+  const { days = 365, platform } = query;
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - Number(days));
+
+  const filter = { product: productId, scrapedAt: { $gte: startDate } };
+  if (platform) filter.platform = platform;
+
+  const prices = await Price.find(filter).sort({ scrapedAt: 1 });
+
+  const header = 'Date,Platform,Price,Currency,URL';
+  const rows = prices.map((p) => {
+    const date = new Date(p.scrapedAt).toISOString();
+    const url = (p.url || '').replace(/"/g, '""');
+    return `${date},${p.platform},${p.price},${p.currency || 'USD'},"${url}"`;
+  });
+
+  return {
+    filename: `${product.name.replace(/[^a-zA-Z0-9]/g, '_')}_price_history.csv`,
+    csv: [header, ...rows].join('\n'),
+  };
+};
+
+module.exports = { createProduct, getProducts, getProductById, updateProduct, deleteProduct, getPriceHistory, scrapeNow, exportPriceHistoryCsv };

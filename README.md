@@ -1,26 +1,29 @@
 # PriceTracker
 
-MERN stack application for tracking product prices across e-commerce platforms (Amazon, Walmart, eBay).
+MERN stack application for tracking product prices across e-commerce platforms (Amazon, Walmart, eBay), with a Python Scrapy microservice for web scraping.
 
 ## Architecture
 
 ```
 Frontend (React.js)          Backend (Node.js/Express)        Database (MongoDB)
 ├── Auth Context             ├── REST API Routes              ├── Users
-├── React UI Components      ├── Auth Middleware               ├── Products
+├── shadcn/ui + Tailwind     ├── Auth Middleware               ├── Products
 ├── Redux Toolkit            ├── Controllers                  ├── Competitors
 └── Axios HTTP Client        └── Service Layer                ├── Prices
                                                               ├── Alerts
-External Services                                             ├── Tracking
-├── Task Scheduler (node-cron)                                └── Subscriptions
-├── Web Scraping (cheerio)
-├── Notification (nodemailer)
-└── Redis Cache (ioredis)
+Scraper (Python)             External Services                ├── Tracking
+├── FastAPI server           ├── Task Scheduler (node-cron)   └── Subscriptions
+├── Scrapy spiders           ├── Notification (nodemailer)
+│   ├── Amazon               └── Redis Cache (ioredis)
+│   ├── Walmart
+│   └── eBay
+└── crochet (Twisted bridge)
 ```
 
 ## Prerequisites
 
 - **Node.js** >= 18
+- **Python** >= 3.10
 - **MongoDB** running locally or a connection URI
 - **Redis** (optional, for caching)
 
@@ -35,12 +38,58 @@ npm run install-all
 cp server/.env.example server/.env
 # Edit server/.env with your MongoDB URI, JWT secret, etc.
 
-# 3. Run development servers (backend + frontend concurrently)
+# 3. Run all three services (backend + frontend + scraper)
 npm run dev
+
+# Or run without scraper
+npm run dev:web
 ```
 
-- Backend: http://localhost:5000
 - Frontend: http://localhost:3000
+- Backend: http://localhost:5000
+- Scraper: http://localhost:8000
+
+## Scraper Service
+
+The scraper is a standalone Python FastAPI microservice in `scraper/`. It runs Scrapy spiders on demand.
+
+### Manual setup
+
+```bash
+cd scraper
+pip install -r requirements.txt
+uvicorn app:app --reload --port 8000
+```
+
+### API
+
+```bash
+# Scrape a product
+curl -X POST http://localhost:8000/scrape \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://www.amazon.com/dp/B0EXAMPLE", "platform": "amazon"}'
+
+# Response
+{
+  "price": 29.99,
+  "title": "Product Name",
+  "image": "https://...",
+  "platform": "amazon",
+  "url": "https://...",
+  "error": null
+}
+
+# Health check
+curl http://localhost:8000/health
+```
+
+### How it connects
+
+1. Node.js `scheduler.service.js` runs on a cron schedule
+2. For each tracked product, it calls `scraper.service.js`
+3. `scraper.service.js` sends `POST /scrape` to the Python service
+4. Python runs the appropriate Scrapy spider and returns results
+5. Node.js saves the price to MongoDB and checks alert conditions
 
 ## API Endpoints
 
@@ -99,23 +148,31 @@ npm run dev
 
 ```
 priceTracker/
-├── server/
+├── server/                  # Node.js Express backend
 │   └── src/
 │       ├── config/          # DB & Redis connections
 │       ├── controllers/     # Request handlers
 │       ├── middleware/       # Auth middleware
 │       ├── models/          # Mongoose schemas
 │       ├── routes/          # Express routes
-│       ├── services/        # Business logic, scraper, scheduler, notifications
+│       ├── services/        # Business logic, scheduler, notifications, scraper client
 │       ├── utils/           # Logger, error class, JWT helper
 │       └── index.js         # Entry point
-├── client/
+├── client/                  # React frontend (Vite)
 │   └── src/
-│       ├── components/      # Layout, PrivateRoute
+│       ├── components/      # Layout, PrivateRoute, shadcn/ui
 │       ├── context/         # AuthContext
 │       ├── pages/           # All page components
 │       ├── services/        # Axios API client
 │       ├── store/           # Redux Toolkit store & slices
-│       └── App.js           # Root with routing
+│       └── App.jsx          # Root with routing
+├── scraper/                 # Python Scrapy microservice
+│   ├── spiders/             # Platform-specific spiders
+│   │   ├── amazon.py
+│   │   ├── walmart.py
+│   │   └── ebay.py
+│   ├── app.py               # FastAPI entry point
+│   ├── settings.py          # Scrapy settings
+│   └── requirements.txt
 └── package.json             # Root scripts (concurrently)
 ```

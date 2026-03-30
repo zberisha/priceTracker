@@ -14,6 +14,8 @@ const priceRoutes = require('./routes/price.routes');
 const alertRoutes = require('./routes/alert.routes');
 const trackingRoutes = require('./routes/tracking.routes');
 const subscriptionRoutes = require('./routes/subscription.routes');
+const categoryRoutes = require('./routes/category.routes');
+const adminRoutes = require('./routes/admin.routes');
 
 // Scheduler
 const { startScheduler } = require('./services/scheduler.service');
@@ -27,7 +29,7 @@ app.use(express.urlencoded({ extended: true }));
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: process.env.NODE_ENV === 'production' ? 100 : 1000,
   message: { error: 'Too many requests, please try again later.' },
 });
 app.use('/api', limiter);
@@ -40,6 +42,8 @@ app.use('/api/prices', priceRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/tracking', trackingRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 

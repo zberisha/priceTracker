@@ -54,4 +54,24 @@ const getPriceHistory = async (req, res, next) => {
   }
 };
 
-module.exports = { createProduct, getProducts, getProductById, updateProduct, deleteProduct, getPriceHistory };
+const scrapeNow = async (req, res, next) => {
+  try {
+    const result = await productService.scrapeNow(req.user._id, req.params.id);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const exportPriceHistory = async (req, res, next) => {
+  try {
+    const { filename, csv } = await productService.exportPriceHistoryCsv(req.user._id, req.params.id, req.query);
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csv);
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { createProduct, getProducts, getProductById, updateProduct, deleteProduct, getPriceHistory, scrapeNow, exportPriceHistory };

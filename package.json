@@ -5,8 +5,10 @@
   "scripts": {
     "server": "cd server && npm run dev",
     "client": "cd client && npm run dev",
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "install-all": "cd server && npm install && cd ../client && npm install",
+    "scraper": "cd scraper && uvicorn app:app --port 8000",
+    "dev": "concurrently \"npm run server\" \"npm run client\" \"npm run scraper\"",
+    "dev:web": "concurrently \"npm run server\" \"npm run client\"",
+    "install-all": "cd server && npm install && cd ../client && npm install && cd ../scraper && pip install -r requirements.txt",
     "build": "cd client && npm run build"
   },
   "devDependencies": {

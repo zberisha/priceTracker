@@ -18,13 +18,14 @@ const processProduct = async (product) => {
       product: product._id,
       platform: source.platform,
       price: result.price,
+      currency: result.currency || product.currency || 'USD',
       url: source.url,
     });
 
     const oldPrice = product.currentPrice;
 
     // Update product prices
-    const updates = { currentPrice: result.price };
+    const updates = { currentPrice: result.price, currency: result.currency || product.currency || 'USD' };
     if (result.price < product.lowestPrice || product.lowestPrice === 0) {
       updates.lowestPrice = result.price;
     }
@@ -59,7 +60,7 @@ const processProduct = async (product) => {
           await Alert.findByIdAndUpdate(alert._id, {
             isTriggered: true,
             triggeredAt: new Date(),
-            message: `Price dropped from $${oldPrice.toFixed(2)} to $${result.price.toFixed(2)}`,
+            message: `Price dropped from ${oldPrice.toFixed(2)} to ${result.price.toFixed(2)} ${result.currency || product.currency || 'USD'}`,
           });
 
           // Send email notification

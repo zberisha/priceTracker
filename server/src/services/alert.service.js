@@ -1,7 +1,13 @@
 const Alert = require('../models/Alert');
 const AppError = require('../utils/AppError');
+const { getSubscription } = require('./subscription.service');
 
 const createAlert = async (userId, data) => {
+  const sub = await getSubscription(userId);
+  const count = await Alert.countDocuments({ user: userId, isActive: true });
+  if (count >= sub.maxAlerts) {
+    throw new AppError(`Alert limit reached (${sub.maxAlerts}). Upgrade your plan to add more.`, 403);
+  }
   const alert = await Alert.create({ ...data, user: userId });
   return alert;
 };
