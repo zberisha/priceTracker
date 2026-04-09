@@ -36,6 +36,7 @@
     "categories": "Categories",
     "logout": "Logout",
     "navigation": "Navigation",
+    "menuDescription": "Language, theme, and account actions",
     "admin": "Admin"
   },
   "home": {
@@ -46,6 +47,7 @@
     "dark": "Dark",
     "system": "System",
     "theme": "Theme",
+    "language": "Language",
     "heroBadge": "Track prices across Amazon, Walmart & eBay",
     "heroTitle1": "Never Overpay for",
     "heroTitle2": "Anything",

@@ -5,7 +5,15 @@ import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetHeader,
+  SheetFooter,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -105,44 +113,94 @@ const AuthNavbar = ({ logoTo = '/' }) => {
                 <TwoLineMenuIcon />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[min(100vw-2rem,20rem)] flex flex-col">
-              <SheetTitle className="sr-only">{t('nav.navigation')}</SheetTitle>
-              <nav className="flex flex-col gap-1 mt-6">
-                <Button
-                  variant="ghost"
-                  className="justify-start h-11 font-normal"
-                  onClick={() => { i18n.changeLanguage(nextLang); closeMenu(); }}
-                >
-                  <Languages className="h-4 w-4 mr-3" />
-                  {nextLang === 'fr' ? 'Français' : 'English'}
-                </Button>
-                <Separator className="my-2" />
-                <p className="text-xs font-medium text-muted-foreground px-2 mb-1">{t('home.theme')}</p>
-                <Button variant="ghost" className="justify-start h-11 font-normal" onClick={() => { setTheme('light'); closeMenu(); }}>
-                  <Sun className="h-4 w-4 mr-3" /> {t('home.light')}
-                </Button>
-                <Button variant="ghost" className="justify-start h-11 font-normal" onClick={() => { setTheme('dark'); closeMenu(); }}>
-                  <Moon className="h-4 w-4 mr-3" /> {t('home.dark')}
-                </Button>
-                <Button variant="ghost" className="justify-start h-11 font-normal" onClick={() => { setTheme('system'); closeMenu(); }}>
-                  <Monitor className="h-4 w-4 mr-3" /> {t('home.system')}
-                </Button>
-                <Separator className="my-2" />
+            <SheetContent
+              side="right"
+              className="flex h-full w-full flex-col gap-0 border-l p-0 sm:max-w-sm"
+            >
+              <SheetHeader className="flex flex-col gap-1 space-y-0 border-b p-0 px-6 pb-4 pt-14 text-center sm:text-left">
+                <SheetTitle className="text-lg font-semibold leading-none tracking-tight">
+                  {t('nav.navigation')}
+                </SheetTitle>
+                <SheetDescription className="sr-only">
+                  {t('nav.menuDescription')}
+                </SheetDescription>
+              </SheetHeader>
+
+              <nav
+                className="flex flex-1 flex-col overflow-y-auto overscroll-contain px-6 py-6"
+                aria-label={t('nav.navigation')}
+              >
+                <div className="mx-auto flex w-full max-w-[280px] flex-col gap-6">
+                  <section className="space-y-2">
+                    <p className="text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      {t('home.language')}
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-11 w-full justify-center gap-2 font-normal"
+                      onClick={() => { i18n.changeLanguage(nextLang); closeMenu(); }}
+                    >
+                      <Languages className="h-4 w-4 shrink-0" />
+                      <span>{nextLang === 'fr' ? 'Français' : 'English'}</span>
+                    </Button>
+                  </section>
+
+                  <Separator />
+
+                  <section className="space-y-2">
+                    <p className="text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      {t('home.theme')}
+                    </p>
+                    <div className="flex flex-col gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="h-11 w-full justify-center gap-2 font-normal"
+                        onClick={() => { setTheme('light'); closeMenu(); }}
+                      >
+                        <Sun className="h-4 w-4 shrink-0" />
+                        {t('home.light')}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="h-11 w-full justify-center gap-2 font-normal"
+                        onClick={() => { setTheme('dark'); closeMenu(); }}
+                      >
+                        <Moon className="h-4 w-4 shrink-0" />
+                        {t('home.dark')}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="h-11 w-full justify-center gap-2 font-normal"
+                        onClick={() => { setTheme('system'); closeMenu(); }}
+                      >
+                        <Monitor className="h-4 w-4 shrink-0" />
+                        {t('home.system')}
+                      </Button>
+                    </div>
+                  </section>
+                </div>
+              </nav>
+
+              <SheetFooter className="mt-auto flex-col gap-3 border-t bg-background p-0 px-6 py-6 sm:flex-col">
                 {user ? (
-                  <Button asChild className="justify-start h-11 font-normal">
+                  <Button asChild className="mx-auto w-full max-w-[280px]">
                     <Link to="/dashboard" onClick={closeMenu}>{t('home.dashboard')}</Link>
                   </Button>
                 ) : (
-                  <>
-                    <Button asChild variant="ghost" className="justify-start h-11 font-normal">
+                  <div className="mx-auto flex w-full max-w-[280px] flex-col gap-3">
+                    <Button asChild variant="outline" className="w-full">
                       <Link to="/login" onClick={closeMenu}>{t('home.signIn')}</Link>
                     </Button>
-                    <Button asChild className="justify-start h-11 mt-2">
+                    <Button asChild className="w-full">
                       <Link to="/register" onClick={closeMenu}>{t('home.getStarted')}</Link>
                     </Button>
-                  </>
+                  </div>
                 )}
-              </nav>
+              </SheetFooter>
             </SheetContent>
           </Sheet>
         </div>

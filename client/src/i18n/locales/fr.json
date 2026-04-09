@@ -36,6 +36,7 @@
     "categories": "Catégories",
     "logout": "Déconnexion",
     "navigation": "Navigation",
+    "menuDescription": "Langue, thème et actions du compte",
     "admin": "Administration"
   },
   "home": {
@@ -46,6 +47,7 @@
     "dark": "Sombre",
     "system": "Système",
     "theme": "Thème",
+    "language": "Langue",
     "heroBadge": "Suivez les prix sur Amazon, Walmart et eBay",
     "heroTitle1": "Ne payez plus jamais",
     "heroTitle2": "Trop cher",
