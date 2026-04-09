@@ -1,14 +1,11 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/context/AuthContext';
-import { useTheme } from '@/context/ThemeContext';
+import AuthNavbar from '@/components/AuthNavbar/AuthNavbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   TrendingUp,
   Search,
@@ -21,16 +18,11 @@ import {
   Package,
   Globe,
   Clock,
-  Sun,
-  Moon,
-  Monitor,
-  Languages,
 } from 'lucide-react';
 
 const Home = () => {
   const { user } = useAuth();
-  const { theme, setTheme } = useTheme();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
   const features = [
     { icon: Search, title: t('home.feature1Title'), description: t('home.feature1Desc') },
@@ -48,67 +40,9 @@ const Home = () => {
     { step: '04', icon: BarChart3, title: t('home.step4Title'), description: t('home.step4Desc') },
   ];
 
-  const themeIcon = theme === 'dark'
-    ? <Moon className="h-4 w-4" />
-    : theme === 'light'
-      ? <Sun className="h-4 w-4" />
-      : <Monitor className="h-4 w-4" />;
-
-  const nextLang = i18n.language === 'fr' ? 'en' : 'fr';
-
   return (
     <div className="min-h-screen bg-background">
-      {/* Nav */}
-      <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto flex items-center justify-between h-16 px-4 sm:px-6">
-          <Link to={user ? '/dashboard' : '/'} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <TrendingUp className="h-6 w-6 text-primary" />
-            <span className="text-lg font-bold">PriceTracker</span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9"
-              onClick={() => i18n.changeLanguage(nextLang)}
-            >
-              <Languages className="h-4 w-4" />
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
-                  {themeIcon}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setTheme('light')}>
-                  <Sun className="h-4 w-4 mr-2" /> {t('home.light')}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme('dark')}>
-                  <Moon className="h-4 w-4 mr-2" /> {t('home.dark')}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme('system')}>
-                  <Monitor className="h-4 w-4 mr-2" /> {t('home.system')}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            {user ? (
-              <Button asChild>
-                <Link to="/dashboard">{t('home.dashboard')}</Link>
-              </Button>
-            ) : (
-              <>
-                <Button variant="ghost" asChild>
-                  <Link to="/login">{t('home.signIn')}</Link>
-                </Button>
-                <Button asChild>
-                  <Link to="/register">{t('home.getStarted')}</Link>
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
+      <AuthNavbar logoTo={user ? '/dashboard' : '/'} />
 
       {/* Hero */}
       <section className="relative overflow-hidden">
